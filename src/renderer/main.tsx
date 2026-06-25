@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Pencil, Trash2, RotateCcw, X, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
 import './styles.css';
 
 type ModalState =
@@ -91,31 +92,15 @@ function App() {
       <main className="content">
         {activeAccount ? (
           <>
-            <header className="topbar">
-              <div>
-                <h1>{activeAccount.name}</h1>
-                <p>Sessão isolada e persistente</p>
-              </div>
-
-              <div className="topbar-actions">
-                <button
-                  onClick={() => {
-                    setNewName(activeAccount.name);
-                    setModal({ type: 'rename', account: activeAccount });
-                  }}
-                >
-                  <Pencil size={16} /> Renomear
-                </button>
-
-                <button onClick={() => clearSession(activeAccount)}>
-                  <RotateCcw size={16} /> Limpar sessão
-                </button>
-
-                <button className="danger" onClick={() => deleteAccount(activeAccount)}>
-                  <Trash2 size={16} /> Remover
-                </button>
-              </div>
-            </header>
+            <Topbar
+  account={activeAccount}
+  onRename={() => {
+    setNewName(activeAccount.name);
+    setModal({ type: 'rename', account: activeAccount });
+  }}
+  onClearSession={() => clearSession(activeAccount)}
+  onDelete={() => deleteAccount(activeAccount)}
+/>
 
             <section className="webview-stack" />
           </>
