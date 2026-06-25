@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Plus, Pencil, Trash2, RotateCcw, Info, X } from 'lucide-react';
+import { Pencil, Trash2, RotateCcw, X, Plus } from 'lucide-react';
+import { Sidebar } from './components/Sidebar';
 import './styles.css';
 
 type ModalState =
@@ -22,8 +23,6 @@ function App() {
 
   async function loadAccounts() {
     const list = await window.whatshub.listAccounts();
-    console.log('Contas carregadas:', list);
-
     setAccounts(list);
 
     if (!activeId && list.length > 0) {
@@ -81,38 +80,13 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">W</div>
-          <div>
-            <strong>WhatsHub</strong>
-            <span>múltiplas contas</span>
-          </div>
-        </div>
-
-        <button className="primary-button" onClick={addAccount}>
-          <Plus size={18} /> Adicionar conta
-        </button>
-
-        <div className="account-list">
-          {accounts.map((account) => (
-            <button
-              key={account.id}
-              className={`account-item ${activeId === account.id ? 'active' : ''}`}
-              onClick={() => setActiveId(account.id)}
-            >
-              <span className="avatar">{account.name.slice(0, 1).toUpperCase()}</span>
-              <span className="account-name">{account.name}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="sidebar-footer">
-          <button className="ghost-button" onClick={() => setModal({ type: 'info' })}>
-            <Info size={16} /> Dados
-          </button>
-        </div>
-      </aside>
+      <Sidebar
+        accounts={accounts}
+        activeId={activeId}
+        onAddAccount={addAccount}
+        onSelectAccount={setActiveId}
+        onOpenInfo={() => setModal({ type: 'info' })}
+      />
 
       <main className="content">
         {activeAccount ? (
@@ -165,11 +139,17 @@ function App() {
 
             <h2>Renomear conta</h2>
 
-            <input value={newName} onChange={(event) => setNewName(event.target.value)} autoFocus />
+            <input
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              autoFocus
+            />
 
             <div className="modal-actions">
               <button onClick={() => setModal(null)}>Cancelar</button>
-              <button className="primary-button" onClick={renameAccount}>Salvar</button>
+              <button className="primary-button" onClick={renameAccount}>
+                Salvar
+              </button>
             </div>
           </div>
         </div>
