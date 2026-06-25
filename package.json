@@ -1,0 +1,58 @@
+{
+  "name": "whatshub",
+  "productName": "WhatsHub",
+  "version": "1.0.0-alpha.1",
+  "description": "Hub desktop para múltiplas contas de WhatsApp Web com sessões persistentes.",
+  "main": "src/main/main.js",
+  "author": "WhatsHub",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --host 127.0.0.1",
+    "dev:electron": "wait-on tcp:5173 && electron . --dev",
+    "start": "npm run dev",
+    "build": "vite build",
+    "make": "npm run build && electron-forge make",
+    "package": "npm run build && electron-forge package"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "latest",
+    "@electron-forge/maker-squirrel": "latest",
+    "@electron-forge/maker-zip": "latest",
+    "@electron-forge/maker-deb": "latest",
+    "@electron-forge/maker-rpm": "latest",
+    "electron": "latest",
+    "typescript": "latest",
+    "concurrently": "latest",
+    "wait-on": "latest"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true,
+        "name": "WhatsHub",
+        "executableName": "WhatsHub"
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "whatshub"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": ["win32"]
+        }
+      ]
+    }
+  }
+}

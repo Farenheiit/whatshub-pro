@@ -1,0 +1,48 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, Segoe UI, Arial, sans-serif;
+  background: #0f1419;
+  color: #eef3f7;
+}
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+button { font: inherit; }
+.app-shell { height: 100vh; display: grid; grid-template-columns: 280px 1fr; background: #0f1419; }
+.sidebar { border-right: 1px solid #27313a; padding: 18px; display: flex; flex-direction: column; gap: 16px; background: #111820; }
+.brand { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; }
+.brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #20d466; color: #062211; font-weight: 900; }
+.brand strong { display: block; font-size: 18px; }
+.brand span { display: block; color: #96a3ad; font-size: 13px; margin-top: 2px; }
+.primary-button { border: 0; background: #20d466; color: #061d10; border-radius: 12px; padding: 11px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 700; }
+.account-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px; }
+.account-item { width: 100%; background: transparent; color: #dce5ea; border: 1px solid transparent; border-radius: 13px; padding: 9px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+.account-item:hover { background: #1a2530; }
+.account-item.active { background: #20313f; border-color: #365064; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: #22303b; color: #20d466; display: grid; place-items: center; font-weight: 800; }
+.account-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-footer { margin-top: auto; }
+.ghost-button { width: 100%; border: 1px solid #2d3a44; color: #cfd8de; background: #151e27; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.content { display: flex; flex-direction: column; min-width: 0; }
+.topbar { height: 78px; padding: 12px 18px; border-bottom: 1px solid #27313a; display: flex; align-items: center; justify-content: space-between; background: #10171e; }
+.topbar h1 { font-size: 19px; margin: 0; }
+.topbar p { margin: 4px 0 0; color: #8997a2; font-size: 13px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.topbar-actions button { background: #18232d; color: #d7e0e6; border: 1px solid #2e3b46; border-radius: 10px; padding: 9px 11px; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.topbar-actions button.danger { color: #ffb3b3; }
+.webview-stack { flex: 1; position: relative; background: #0b1015; }
+.whatsapp-view { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.whatsapp-view.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+.whatsapp-view.visible { opacity: 1; pointer-events: auto; visibility: visible; }
+.empty-state { height: 100%; display: grid; place-content: center; text-align: center; gap: 12px; color: #cfd8de; }
+.empty-state h2 { margin: 0; }
+.empty-state p { margin: 0 0 10px; color: #8c9aa5; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 10; }
+.modal { width: 420px; background: #151e27; border: 1px solid #32414d; border-radius: 18px; padding: 22px; box-shadow: 0 20px 80px rgba(0,0,0,.45); position: relative; }
+.modal.large { width: 620px; }
+.modal h2 { margin: 0 0 14px; }
+.modal input { width: 100%; border: 1px solid #3a4b58; background: #0f161d; color: #eef3f7; border-radius: 12px; padding: 12px; outline: none; }
+.modal code { display: block; background: #0e141a; border: 1px solid #293643; border-radius: 12px; padding: 12px; color: #a9f0c2; word-break: break-all; }
+.modal .hint { color: #8997a2; font-size: 13px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.modal-actions button { border: 1px solid #33434f; background: #101820; color: #d8e1e7; border-radius: 10px; padding: 10px 13px; cursor: pointer; }
+.modal-close { position: absolute; top: 12px; right: 12px; background: transparent; color: #9aa7b2; border: 0; cursor: pointer; }
