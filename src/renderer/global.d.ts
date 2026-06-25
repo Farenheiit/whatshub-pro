@@ -3,6 +3,8 @@ type WhatsHubAccount = {
   name: string;
   createdAt: string;
   url: string;
+  showAccount: (id: string) => Promise<boolean>;
+  hideAllViews: () => Promise<boolean>;
 };
 
 declare global {

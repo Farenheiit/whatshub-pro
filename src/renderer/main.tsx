@@ -3,16 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { Plus, Pencil, Trash2, RotateCcw, Info, X } from 'lucide-react';
 import './styles.css';
 
-const chromeUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
-
 type ModalState =
   | { type: 'rename'; account: WhatsHubAccount }
   | { type: 'info' }
   | null;
-
-function partitionFor(account: WhatsHubAccount) {
-  return `persist:whatshub-${account.id}`;
-}
 
 function App() {
   const [accounts, setAccounts] = useState<WhatsHubAccount[]>([]);
@@ -31,15 +25,19 @@ function App() {
   }
 
   useEffect(() => {
-    refreshAccounts();
-    window.whatshub.getInfo().then(setAppInfo);
-  }, []);
+  if (activeAccount?.id) {
+    window.whatshub.showAccount(activeAccount.id);
+  } else {
+    window.whatshub.hideAllViews();
+  }
+}, [activeAccount?.id]);
 
   async function addAccount() {
-    const account = await window.whatshub.addAccount();
-    setAccounts((prev) => [...prev, account]);
-    setActiveId(account.id);
-  }
+  const account = await window.whatshub.addAccount();
+  setAccounts((prev) => [...prev, account]);
+  setActiveId(account.id);
+  await window.whatshub.showAccount(account.id);
+}
 
   async function renameAccount() {
     if (!modal || modal.type !== 'rename') return;
@@ -111,18 +109,7 @@ function App() {
               </div>
             </header>
 
-            <section className="webview-stack">
-              {accounts.map((account) => (
-                <webview
-                  key={account.id}
-                  src={account.url}
-                  partition={partitionFor(account)}
-                  useragent={chromeUA}
-                  allowpopups="true"
-                  className={`whatsapp-view ${activeAccount.id === account.id ? 'visible' : 'hidden'}`}
-                />
-              ))}
-            </section>
+            <section className="webview-stack" />
           </>
         ) : (
           <div className="empty-state">

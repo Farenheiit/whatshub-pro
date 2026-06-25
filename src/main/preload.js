@@ -6,5 +6,9 @@ contextBridge.exposeInMainWorld('whatshub', {
   renameAccount: (id, name) => ipcRenderer.invoke('accounts:rename', id, name),
   deleteAccount: (id) => ipcRenderer.invoke('accounts:delete', id),
   clearSession: (id) => ipcRenderer.invoke('accounts:clear-session', id),
+
+  showAccount: (id) => ipcRenderer.invoke('views:show-account', id),
+  hideAllViews: () => ipcRenderer.invoke('views:hide-all'),
+
   getInfo: () => ipcRenderer.invoke('app:get-info')
 });
