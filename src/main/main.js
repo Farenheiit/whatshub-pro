@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, session, WebContentsView } = require('electron');
+const { app, BrowserWindow, ipcMain, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { ViewService } = require('./services/ViewService');
 
 const APP_DATA_NAME = 'WhatsHub';
 const WHATSAPP_URL = 'https://web.whatsapp.com/';
@@ -14,8 +15,6 @@ const configDir = path.join(app.getPath('userData'), 'config');
 const configFile = path.join(configDir, 'accounts.json');
 
 let mainWindow = null;
-let activeAccountId = null;
-const whatsappViews = new Map();
 
 function ensureConfig() {
   if (!fs.existsSync(configDir)) {
@@ -100,133 +99,19 @@ function accountPartition(id) {
   return `persist:whatshub-${id}`;
 }
 
-function getWhatsappBounds() {
-  if (!mainWindow) {
-    return { x: 276, y: 132, width: 900, height: 600 };
-  }
-
-  const bounds = mainWindow.getContentBounds();
-
-  return {
-    x: 276,
-    y: 132,
-    width: Math.max(200, bounds.width - 276),
-    height: Math.max(200, bounds.height - 132)
-  };
-}
-
-function hideAllWhatsappViews() {
-  for (const view of whatsappViews.values()) {
-    view.setBounds({ x: -10000, y: -10000, width: 10, height: 10 });
-  }
-}
-
-function resizeActiveWhatsappView() {
-  if (!activeAccountId) return;
-
-  const view = whatsappViews.get(activeAccountId);
-  if (!view) return;
-
-  view.setBounds(getWhatsappBounds());
-}
-
-function createWhatsappView(accountId) {
-  if (!mainWindow) {
-    throw new Error('Janela principal não criada.');
-  }
-
-  if (whatsappViews.has(accountId)) {
-    return whatsappViews.get(accountId);
-  }
-
-  const partition = accountPartition(accountId);
-  const ses = session.fromPartition(partition, { cache: true });
-
-  ses.setUserAgent(CHROME_UA);
-
-  const view = new WebContentsView({
-    webPreferences: {
-      partition,
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true
-    }
-  });
-
-  view.webContents.setUserAgent(CHROME_UA);
-
-  view.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    const url = String(validatedURL || '');
-
-    if (url.includes('flows.whatsapp.net')) {
-      return;
-    }
-
-    console.warn('Falha ao carregar:', errorCode, errorDescription, url);
-  });
-
-  view.webContents.on('page-title-updated', (event) => {
-    event.preventDefault();
-  });
-
-  mainWindow.contentView.addChildView(view);
-
-  view.setBounds({ x: -10000, y: -10000, width: 10, height: 10 });
-  view.webContents.loadURL(WHATSAPP_URL);
-
-  whatsappViews.set(accountId, view);
-
-  return view;
-}
-
-function showWhatsappView(accountId) {
-  if (!accountId) return false;
-
-  if (!accountExists(accountId)) {
-    console.warn('Conta não encontrada:', accountId);
-    return false;
-  }
-
-  const view = createWhatsappView(accountId);
-
-  hideAllWhatsappViews();
-
-  activeAccountId = accountId;
-  view.setBounds(getWhatsappBounds());
-  view.webContents.focus();
-
-  return true;
-}
-
-function removeWhatsappView(accountId) {
-  const view = whatsappViews.get(accountId);
-
-  if (!view || !mainWindow) return;
-
-  mainWindow.contentView.removeChildView(view);
-  view.webContents.close();
-
-  whatsappViews.delete(accountId);
-
-  if (activeAccountId === accountId) {
-    activeAccountId = null;
-  }
-}
+const viewService = new ViewService({
+  whatsappUrl: WHATSAPP_URL,
+  chromeUserAgent: CHROME_UA,
+  accountExists,
+  accountPartition
+});
 
 async function clearAccountSession(accountId) {
-  removeWhatsappView(accountId);
+  viewService.remove(accountId);
 
   const ses = session.fromPartition(accountPartition(accountId));
   await ses.clearStorageData();
   await ses.clearCache();
-
-  if (accountExists(accountId)) {
-    createWhatsappView(accountId);
-
-    if (activeAccountId === accountId) {
-      showWhatsappView(accountId);
-    }
-  }
 
   return true;
 }
@@ -248,11 +133,13 @@ function createMainWindow() {
     }
   });
 
+  viewService.setMainWindow(mainWindow);
+
   mainWindow.webContents.setUserAgent(CHROME_UA);
 
-  mainWindow.on('resize', resizeActiveWhatsappView);
-  mainWindow.on('maximize', resizeActiveWhatsappView);
-  mainWindow.on('unmaximize', resizeActiveWhatsappView);
+  mainWindow.on('resize', () => viewService.resizeActiveView());
+  mainWindow.on('maximize', () => viewService.resizeActiveView());
+  mainWindow.on('unmaximize', () => viewService.resizeActiveView());
 
   const isDev = process.argv.includes('--dev');
 
@@ -264,22 +151,18 @@ function createMainWindow() {
 }
 
 function registerIpcHandlers() {
-  ipcMain.handle('accounts:list', () => {
-    const accounts = readAccounts();
+  ipcMain.handle('accounts:list', () => readAccounts());
 
-    console.log("==== ACCOUNTS ====");
-    console.log(accounts);
-    console.log("==================");
-
-    return accounts;
-});
+  ipcMain.handle('accounts:add', () => {
+    return createAccount();
+  });
 
   ipcMain.handle('accounts:rename', (_event, id, name) => {
     return renameAccount(id, name);
   });
 
   ipcMain.handle('accounts:delete', async (_event, id) => {
-    removeWhatsappView(id);
+    viewService.remove(id);
 
     const accounts = deleteAccountFromConfig(id);
 
@@ -295,12 +178,11 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('views:show-account', (_event, id) => {
-    return showWhatsappView(id);
+    return viewService.show(id);
   });
 
   ipcMain.handle('views:hide-all', () => {
-    hideAllWhatsappViews();
-    activeAccountId = null;
+    viewService.hideAll();
     return true;
   });
 
@@ -332,11 +214,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  for (const view of whatsappViews.values()) {
-    view.webContents.close();
-  }
-
-  whatsappViews.clear();
+  viewService.closeAll();
 
   if (process.platform !== 'darwin') {
     app.quit();
