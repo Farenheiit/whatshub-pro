@@ -27,7 +27,13 @@ function App() {
 
   const [modal, setModal] = useState<ModalState>(null);
   const [newName, setNewName] = useState('');
-  const [appInfo, setAppInfo] = useState<any>(null);
+  
+  type AppInfo = Awaited<
+    ReturnType<WhatsHubAPI["getInfo"]>
+>;
+
+const [appInfo, setAppInfo] =
+    useState<AppInfo | null>(null);
 
   useEffect(() => {
     loadAccounts();
