@@ -15,7 +15,7 @@ type ModalsProps = {
   onSaveRename: () => void;
 };
 
-function Modals({
+export function Modals({
   modal,
   newName,
   appInfo,
@@ -23,10 +23,9 @@ function Modals({
   onClose,
   onSaveRename
 }: ModalsProps) {
-  // conteúdo igual
-}
-
-export { Modals };
+  if (!modal) {
+    return null;
+  }
 
   if (modal.type === 'rename') {
     return (
@@ -68,3 +67,4 @@ export { Modals };
       </div>
     </div>
   );
+}

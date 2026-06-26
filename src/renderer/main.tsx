@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
+import { Modals } from './components/Modals';
+import { useAccounts } from './hooks/useAccounts';
 import './styles.css';
 
 type ModalState =
@@ -11,26 +13,21 @@ type ModalState =
   | null;
 
 function App() {
-  const [accounts, setAccounts] = useState<WhatsHubAccount[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const {
+    accounts,
+    activeId,
+    activeAccount,
+    setActiveId,
+    loadAccounts,
+    addAccount,
+    renameAccount: renameAccountFromHook,
+    deleteAccount,
+    clearSession
+  } = useAccounts();
+
   const [modal, setModal] = useState<ModalState>(null);
   const [newName, setNewName] = useState('');
   const [appInfo, setAppInfo] = useState<any>(null);
-
-  const activeAccount = useMemo(
-    () => accounts.find((account) => account.id === activeId) ?? null,
-    [accounts, activeId]
-  );
-
-  async function loadAccounts() {
-    const list = await window.whatshub.listAccounts();
-    setAccounts(list);
-
-    if (!activeId && list.length > 0) {
-      setActiveId(list[0].id);
-      await window.whatshub.showAccount(list[0].id);
-    }
-  }
 
   useEffect(() => {
     loadAccounts();
@@ -38,45 +35,50 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (modal) {
+      window.whatshub.hideAllViews();
+      return;
+    }
+
     if (activeId) {
       window.whatshub.showAccount(activeId);
     } else {
       window.whatshub.hideAllViews();
     }
-  }, [activeId]);
+  }, [modal, activeId]);
 
-  async function addAccount() {
-    const account = await window.whatshub.addAccount();
-    await loadAccounts();
-    setActiveId(account.id);
+  function openRenameModal(account: WhatsHubAccount) {
+    setNewName(account.name);
+    setModal({ type: 'rename', account });
+  }
+
+  function openInfoModal() {
+    setModal({ type: 'info' });
+  }
+
+  function closeModal() {
+    setModal(null);
   }
 
   async function renameAccount() {
     if (!modal || modal.type !== 'rename') return;
 
-    const list = await window.whatshub.renameAccount(modal.account.id, newName);
-    setAccounts(list);
+    await renameAccountFromHook(modal.account.id, newName);
     setModal(null);
   }
 
-  async function deleteAccount(account: WhatsHubAccount) {
+  async function handleDeleteAccount(account: WhatsHubAccount) {
     const ok = confirm(`Remover "${account.name}"? A sessão dessa conta também será apagada.`);
     if (!ok) return;
 
-    const list = await window.whatshub.deleteAccount(account.id);
-    setAccounts(list);
-
-    if (activeId === account.id) {
-      setActiveId(list[0]?.id ?? null);
-    }
+    await deleteAccount(account);
   }
 
-  async function clearSession(account: WhatsHubAccount) {
+  async function handleClearSession(account: WhatsHubAccount) {
     const ok = confirm(`Limpar a sessão de "${account.name}"? Será necessário ler o QR Code novamente.`);
     if (!ok) return;
 
-    await window.whatshub.clearSession(account.id);
-    await window.whatshub.showAccount(account.id);
+    await clearSession(account);
   }
 
   return (
@@ -86,21 +88,18 @@ function App() {
         activeId={activeId}
         onAddAccount={addAccount}
         onSelectAccount={setActiveId}
-        onOpenInfo={() => setModal({ type: 'info' })}
+        onOpenInfo={openInfoModal}
       />
 
       <main className="content">
         {activeAccount ? (
           <>
             <Topbar
-  account={activeAccount}
-  onRename={() => {
-    setNewName(activeAccount.name);
-    setModal({ type: 'rename', account: activeAccount });
-  }}
-  onClearSession={() => clearSession(activeAccount)}
-  onDelete={() => deleteAccount(activeAccount)}
-/>
+              account={activeAccount}
+              onRename={() => openRenameModal(activeAccount)}
+              onClearSession={() => handleClearSession(activeAccount)}
+              onDelete={() => handleDeleteAccount(activeAccount)}
+            />
 
             <section className="webview-stack" />
           </>
@@ -115,44 +114,14 @@ function App() {
         )}
       </main>
 
-      {modal?.type === 'rename' && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <button className="modal-close" onClick={() => setModal(null)}>
-              <X size={18} />
-            </button>
-
-            <h2>Renomear conta</h2>
-
-            <input
-              value={newName}
-              onChange={(event) => setNewName(event.target.value)}
-              autoFocus
-            />
-
-            <div className="modal-actions">
-              <button onClick={() => setModal(null)}>Cancelar</button>
-              <button className="primary-button" onClick={renameAccount}>
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modal?.type === 'info' && (
-        <div className="modal-backdrop">
-          <div className="modal large">
-            <button className="modal-close" onClick={() => setModal(null)}>
-              <X size={18} />
-            </button>
-
-            <h2>Dados persistentes</h2>
-            <p>As sessões e configurações ficam em uma pasta fixa.</p>
-            <code>{appInfo?.userDataPath || 'Carregando...'}</code>
-          </div>
-        </div>
-      )}
+      <Modals
+        modal={modal}
+        newName={newName}
+        appInfo={appInfo}
+        onChangeName={setNewName}
+        onClose={closeModal}
+        onSaveRename={renameAccount}
+      />
     </div>
   );
 }
