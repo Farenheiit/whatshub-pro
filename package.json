@@ -18,20 +18,21 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
+    "vite": "latest",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@electron-forge/cli": "latest",
-    "@electron-forge/maker-squirrel": "latest",
-    "@electron-forge/maker-zip": "latest",
     "@electron-forge/maker-deb": "latest",
     "@electron-forge/maker-rpm": "latest",
+    "@electron-forge/maker-squirrel": "latest",
+    "@electron-forge/maker-zip": "latest",
+    "concurrently": "latest",
     "electron": "latest",
     "typescript": "latest",
-    "concurrently": "latest",
     "wait-on": "latest"
   },
   "config": {
@@ -50,7 +51,9 @@
         },
         {
           "name": "@electron-forge/maker-zip",
-          "platforms": ["win32"]
+          "platforms": [
+            "win32"
+          ]
         }
       ]
     }
